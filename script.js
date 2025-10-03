@@ -5,22 +5,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const predictionForm = document.getElementById('predictionForm');
     const resultsDiv = document.getElementById('results');
 	const chartCanvas = document.getElementById('predictionsChart');
-    // Demo mode: no backend. All data is loaded locally from diseases.js
+    // Demo mode: load from disease.json (expanded to 500 demo records client-side)
 
     let allSymptoms = [];
     let selectedSymptoms = new Set();
-	let predictionsChart = null;
+    let predictionsChart = null;
+    let diseaseData = {};
 
-	function getAllSymptomsFromLocal() {
-		try {
-			if (typeof diseaseData !== 'object' || !diseaseData) return [];
-			const all = Object.values(diseaseData).flatMap(d => Array.isArray(d.symptoms) ? d.symptoms : []);
-			return [...new Set(all)].sort();
-		} catch (e) {
-			console.error('Local fallback failed to extract symptoms:', e);
-			return [];
-		}
-	}
+    function getAllSymptomsFromLocal() {
+        try {
+            if (typeof diseaseData !== 'object' || !diseaseData) return [];
+            const all = Object.values(diseaseData).flatMap(d => Array.isArray(d.symptoms) ? d.symptoms : []);
+            return [...new Set(all)].sort();
+        } catch (e) {
+            console.error('Local extraction failed:', e);
+            return [];
+        }
+    }
 
 	function buildLocalPredictions(selected) {
 		if (typeof diseaseData !== 'object' || !diseaseData) return [];
@@ -44,13 +45,50 @@ document.addEventListener('DOMContentLoaded', function() {
 		return predictions;
 	}
 
-    // Load all unique symptoms from local dataset only
-	function loadSymptoms() {
+    // Load all unique symptoms from disease.json and expand to ~500 demo records
+    async function loadSymptoms() {
         resultsDiv.innerHTML = '<div class="alert alert-info">Loading demo data...</div>';
-        const local = getAllSymptomsFromLocal();
-        allSymptoms = local;
-        updateSymptomsDropdown();
-        resultsDiv.innerHTML = '<div class="alert alert-success">Demo data loaded. Select symptoms to see predictions.</div>';
+        try {
+            const res = await fetch('disease.json', { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error(`Failed to load disease.json (${res.status})`);
+            const baseList = await res.json(); // Expecting an array of seed diseases
+
+            // Expand to 500 demo entries by cloning with suffixes
+            const expanded = [];
+            const copiesNeeded = Math.ceil(500 / baseList.length);
+            for (let i = 0; i < copiesNeeded; i++) {
+                for (const item of baseList) {
+                    const suffix = i === 0 ? '' : ` #${i+1}`;
+                    expanded.push({
+                        name: `${item.name}${suffix}`,
+                        description: item.description,
+                        symptoms: item.symptoms,
+                        precautions: item.precautions,
+                        medications: item.medications
+                    });
+                    if (expanded.length >= 500) break;
+                }
+                if (expanded.length >= 500) break;
+            }
+
+            // Build map
+            diseaseData = expanded.reduce((acc, d) => {
+                acc[d.name] = {
+                    description: d.description,
+                    symptoms: d.symptoms,
+                    precautions: d.precautions,
+                    medications: d.medications
+                };
+                return acc;
+            }, {});
+
+            allSymptoms = getAllSymptomsFromLocal();
+            updateSymptomsDropdown();
+            resultsDiv.innerHTML = '<div class="alert alert-success">Demo data loaded. Select symptoms to see predictions.</div>';
+        } catch (e) {
+            console.error('Failed to load local disease.json:', e);
+            resultsDiv.innerHTML = '<div class="alert alert-danger">Failed to load local demo data.</div>';
+        }
     }
 
     // Function to update the symptoms dropdown based on search
