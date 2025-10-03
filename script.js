@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const predictionForm = document.getElementById('predictionForm');
     const resultsDiv = document.getElementById('results');
 	const chartCanvas = document.getElementById('predictionsChart');
-    const API_URL = 'https://health-detective-api.onrender.com';  // Backend server URL
+    // Demo mode: no backend. All data is loaded locally from diseases.js
 
     let allSymptoms = [];
     let selectedSymptoms = new Set();
@@ -44,59 +44,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		return predictions;
 	}
 
-    // Load all unique symptoms from the backend
-	async function loadSymptoms() {
-        try {
-            console.log('Fetching symptoms from:', `${API_URL}/diseases`);
-            resultsDiv.innerHTML = '<div class="alert alert-info">Loading symptoms...</div>';
-            
-            const response = await fetch(`${API_URL}/diseases`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log('Received data:', data);
-            
-			if (data.diseases && Array.isArray(data.diseases)) {
-                allSymptoms = [...new Set(data.diseases.flatMap(disease => disease.symptoms))].sort();
-                console.log('Extracted symptoms:', allSymptoms.length);
-                updateSymptomsDropdown();
-                resultsDiv.innerHTML = '<div class="alert alert-success">Symptoms loaded successfully!</div>';
-            } else {
-                throw new Error('Invalid data format received from API');
-            }
-        } catch (error) {
-            console.error('Error loading symptoms:', error);
-			// Fallback to local data if available
-			const local = getAllSymptomsFromLocal();
-			if (local.length > 0) {
-				allSymptoms = local;
-				updateSymptomsDropdown();
-				resultsDiv.innerHTML = `
-					<div class="alert alert-warning" role="alert">
-						Online API unavailable (GET ${API_URL}/diseases). Using local dataset for symptoms.
-					</div>
-				`;
-			} else {
-				resultsDiv.innerHTML = `
-					<div class="alert alert-danger" role="alert">
-						Error loading symptoms: ${error.message}
-						<br>API URL: ${API_URL}/diseases
-					</div>
-				`;
-			}
-        }
+    // Load all unique symptoms from local dataset only
+	function loadSymptoms() {
+        resultsDiv.innerHTML = '<div class="alert alert-info">Loading demo data...</div>';
+        const local = getAllSymptomsFromLocal();
+        allSymptoms = local;
+        updateSymptomsDropdown();
+        resultsDiv.innerHTML = '<div class="alert alert-success">Demo data loaded. Select symptoms to see predictions.</div>';
     }
 
     // Function to update the symptoms dropdown based on search
@@ -178,8 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Event listener for form submission
-    predictionForm.addEventListener('submit', async function(e) {
+    // Event listener for form submission (local predictions only)
+    predictionForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         if (selectedSymptoms.size === 0) {
@@ -191,45 +145,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-		try {
-            console.log('Sending symptoms:', Array.from(selectedSymptoms));
-            const response = await fetch(`${API_URL}/predict`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    symptoms: Array.from(selectedSymptoms)
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-			const data = await response.json();
-			console.log('Received prediction:', data);
-			displayResults(data.predictions);
-        } catch (error) {
-			console.error('Error calling API, attempting local prediction fallback:', error);
-			const localPreds = buildLocalPredictions(selectedSymptoms);
-			if (localPreds.length > 0) {
-				resultsDiv.innerHTML = `
-					<div class="alert alert-warning" role="alert">
-						Online API unavailable (POST ${API_URL}/predict). Showing local estimates based on bundled dataset.
-					</div>
-				`;
-				displayResults(localPreds);
-			} else {
-				resultsDiv.innerHTML = `
-					<div class="alert alert-danger" role="alert">
-						Error: ${error.message}
-						<br>API URL: ${API_URL}/predict
-					</div>
-				`;
-			}
-        }
+        const localPreds = buildLocalPredictions(selectedSymptoms);
+        displayResults(localPreds);
     });
 
     // Function to display results
