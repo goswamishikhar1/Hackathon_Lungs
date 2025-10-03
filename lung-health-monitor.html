@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LungTrack Pro - Advanced Lung Health Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 50%, rgba(220, 38, 38, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(220, 38, 38, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(220, 38, 38, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: '🫁';
+            -webkit-text-fill-color: initial;
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        nav a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(220, 38, 38, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s;
+        }
+
+        nav a:hover::before, nav a.active::before {
+            transform: translateX(0);
+        }
+
+        nav a.active {
+            border: 1px solid #dc2626;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: linear-gradient(145deg, rgba(31, 31, 31, 0.9), rgba(10, 10, 10, 0.9));
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(220, 38, 38, 0.2);
+        }
+
+        .card-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .spo2-display {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .spo2-ring {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .spo2-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .spo2-label {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #999;
+        }
+
+        .heart-rate {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            font-size: 36px;
+            margin: 30px 0;
+        }
+
+        .heart-icon {
+            color: #dc2626;
+            animation: heartbeat 1.2s infinite;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ef4444;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .lung-chart, .spo2-chart {
+            width: 100%;
+            height: 250px;
+            position: relative;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            border-radius: 10px;
+        }
+
+        .blow-button {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 20px auto;
+            box-shadow: 0 5px 20px rgba(220, 38, 38, 0.3);
+        }
+
+        .blow-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4);
+        }
+
+        .blow-button:active {
+            transform: translateY(0);
+        }
+
+        .blow-button.recording {
+            animation: pulse 2s infinite;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 5px 20px rgba(34, 197, 94, 0.3); }
+            50% { box-shadow: 0 5px 40px rgba(34, 197, 94, 0.6); }
+        }
+
+        .doctor-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(220, 38, 38, 0.05);
+            border-radius: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .doctor-card:hover {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: rgba(220, 38, 38, 0.3);
+        }
+
+        .doctor-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .doctor-info {
+            flex: 1;
+        }
+
+        .doctor-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .doctor-specialty {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .connect-btn {
+            background: transparent;
+            border: 1px solid #dc2626;
+            color: #dc2626;
+            padding: 10px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .connect-btn:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #22c55e;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .ai-insights {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05));
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .insight-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(220, 38, 38, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ef4444;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .data-table th {
+            background: rgba(220, 38, 38, 0.1);
+            color: #ef4444;
+        }
+
+        .data-table tr:hover {
+            background: rgba(220, 38, 38, 0.05);
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(220, 38, 38, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" style="position:fixed;top:24px;left:24px;z-index:10000;text-decoration:none;background:#181818;border:2px solid #ef4444;color:#ef4444;padding:10px 22px;border-radius:30px;font-weight:bold;box-shadow:0 2px 12px rgba(220,38,38,0.10);transition:background 0.2s;" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#181818';this.style.color='#ef4444'">← Back to Home</a>
+    <div class="container">
+        <header>
+            <div class="logo">LungTrack Pro</div>
+            <nav>
+                <a href="#" class="active" onclick="showSection('dashboard')">Dashboard</a>
+                <a href="#" onclick="showSection('history')">History</a>
+                <a href="#" onclick="showSection('doctors')">Doctors</a>
+                <a href="#" onclick="showSection('ai-analysis')">AI Analysis</a>
+            </nav>
+        </header>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+            <div class="dashboard">
+                <div class="card">
+                    <h3 class="card-title">💨 Lung Function Test</h3>
+                    <div class="lung-chart">
+                        <canvas id="lungCanvas" class="chart-canvas"></canvas>
+                    </div>
+                    <button class="blow-button" onclick="startBlowTest()">
+                        <span>🌬️</span>
+                        <span id="blowText">Start Blow Test</span>
+                    </button>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🩸 Blood Oxygen (SpO2)</h3>
+                    <div class="spo2-display">
+                        <svg class="spo2-ring" viewBox="0 0 200 200">
+                            <circle cx="100" cy="100" r="90" stroke="rgba(220, 38, 38, 0.2)" stroke-width="20" fill="none"/>
+                            <circle id="spo2Progress" cx="100" cy="100" r="90" stroke="url(#gradient)" stroke-width="20" fill="none"
+                                    stroke-dasharray="565.48" stroke-dashoffset="113" stroke-linecap="round"/>
+                            <defs>
+                                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#ef4444;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="spo2-value" id="spo2Value">98%</div>
+                        <div class="spo2-label">SpO2</div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-value">98%</div>
+                            <div class="stat-label">Current</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">97%</div>
+                            <div class="stat-label">Average</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">❤️ Heart Rate Monitor</h3>
+                    <div class="heart-rate">
+                        <span class="heart-icon">❤️</span>
+                        <span id="heartRate">72</span>
+                        <span style="font-size: 20px; color: #999;">BPM</span>
+                    </div>
+                    <div class="spo2-chart">
+                        <canvas id="heartCanvas" class="chart-canvas"></canvas>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-value">72</div>
+                            <div class="stat-label">Resting</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">120</div>
+                            <div class="stat-label">Max Today</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="card-title">🔬 Real-Time Status</h3>
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-value">Normal</div>
+                            <div class="stat-label">Lung Capacity</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">Good</div>
+                            <div class="stat-label">Overall Health</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">3.8L</div>
+                            <div class="stat-label">FVC</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">3.2L</div>
+                            <div class="stat-label">FEV1</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <span style="color: #22c55e;">● Device Connected</span>
+                        <span class="status-indicator"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div id="history" class="section">
+            <div class="card">
+                <h3 class="card-title">📊 Historical Data</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>SpO2</th>
+                            <th>Heart Rate</th>
+                            <th>FVC</th>
+                            <th>FEV1</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2024-01-15 10:30 AM</td>
+                            <td>98%</td>
+                            <td>72 BPM</td>
+                            <td>3.8L</td>
+                            <td>3.2L</td>
+                            <td style="color: #22c55e;">Normal</td>
+                        </tr>
+                        <tr>
+                            <td>2024-01-14 09:45 AM</td>
+                            <td>97%</td>
+                            <td>75 BPM</td>
+                            <td>3.7L</td>
+                            <td>3.1L</td>
+                            <td style="color: #22c55e;">Normal</td>
+                        </tr>
+                        <tr>
+                            <td>2024-01-13 11:00 AM</td>
+                            <td>96%</td>
+                            <td>78 BPM</td>
+                            <td>3.6L</td>
+                            <td>3.0L</td>
+                            <td style="color: #eab308;">Mild Issue</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="export-btn">📥 Export Data</button>
+            </div>
+        </div>
+
+        <!-- Doctors Section -->
+        <div id="doctors" class="section">
+            <div class="card">
+                <h3 class="card-title">👨‍⚕️ Available Specialists</h3>
+                <div class="doctor-card">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <div class="doctor-info">
+                        <div class="doctor-name">Dr. James Wilson</div>
+                        <div class="doctor-specialty">Pulmonologist • 15 years experience</div>
+                    </div>
+                    <button class="connect-btn">Connect</button>
+                </div>
+                <div class="doctor-card">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <div class="doctor-info">
+                        <div class="doctor-name">Dr. Sarah Chen</div>
+                        <div class="doctor-specialty">Respiratory Specialist • 12 years experience</div>
+                    </div>
+                    <button class="connect-btn">Connect</button>
+                </div>
+                <div class="doctor-card">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <div class="doctor-info">
+                        <div class="doctor-name">Dr. Michael Roberts</div>
+                        <div class="doctor-specialty">Cardiologist • 20 years experience</div>
+                    </div>
+                    <button class="connect-btn">Connect</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Analysis Section -->
+        <div id="ai-analysis" class="section">
+            <div class="card">
+                <h3 class="card-title">🤖 AI Health Insights</h3>
+                <div class="ai-insights">
+                    <div class="insight-item">
+                        <div class="insight-icon">✅</div>
+                        <div>
+                            <strong>Lung Function:</strong> Your lung capacity is within normal range. FVC and FEV1 values indicate healthy respiratory function.
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">📈</div>
+                        <div>
+                            <strong>Trend Analysis:</strong> Your SpO2 levels have been consistently stable over the past week, averaging 97%.
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">💡</div>
+                        <div>
+                            <strong>Recommendation:</strong> Continue regular monitoring. Consider breathing exercises to maintain optimal lung health.
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">⚠️</div>
+                        <div>
+                            <strong>Alert:</strong> Slight elevation in resting heart rate detected. Monitor for next 48 hours.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize charts
+        let lungCtx = document.getElementById('lungCanvas').getContext('2d');
+        let heartCtx = document.getElementById('heartCanvas').getContext('2d');
+        let isRecording = false;
+        let lungData = [];
+        let heartData = [];
+        let animationId;
+
+        // SpO2 animation
+        function animateSpO2() {
+            const circle = document.getElementById('spo2Progress');
+            const value = document.getElementById('spo2Value');
+            const targetValue = 95 + Math.floor(Math.random() * 5);
+            value.textContent = targetValue + '%';
+            
+            const circumference = 565.48;
+            const offset = circumference - (circumference * targetValue / 100);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        // Heart rate animation
+        function animateHeartRate() {
+            const heartRate = document.getElementById('heartRate');
+            const newRate = 68 + Math.floor(Math.random() * 12);
+            heartRate.textContent = newRate;
+        }
+
+        // Lung chart drawing
+        function drawLungChart() {
+            lungCtx.fillStyle = '#0a0a0a';
+            lungCtx.fillRect(0, 0, lungCanvas.width, lungCanvas.height);
+            
+            lungCtx.strokeStyle = '#dc2626';
+            lungCtx.lineWidth = 2;
+            lungCtx.beginPath();
+            
+            for (let i = 0; i < lungData.length; i++) {
+                const x = (i / lungData.length) * lungCanvas.width;
+                const y = lungCanvas.height / 2 - lungData[i] * 50;
+                
+                if (i === 0) lungCtx.moveTo(x, y);
+                else lungCtx.lineTo(x, y);
+            }
+            
+            lungCtx.stroke();
+        }
+
+        // Heart chart drawing
+        function drawHeartChart() {
+            heartCtx.fillStyle = '#0a0a0a';
+            heartCtx.fillRect(0, 0, heartCanvas.width, heartCanvas.height);
+            
+            heartCtx.strokeStyle = '#ef4444';
+            heartCtx.lineWidth = 2;
+            heartCtx.beginPath();
+            
+            for (let i = 0; i < heartData.length; i++) {
+                const x = (i / heartData.length) * heartCanvas.width;
+                const y = heartCanvas.height / 2 - heartData[i] * 30;
+                
+                if (i === 0) heartCtx.moveTo(x, y);
+                else heartCtx.lineTo(x, y);
+            }
+            
+            heartCtx.stroke();
+        }
+
+        // Start blow test
+        function startBlowTest() {
+            const button = event.target.closest('.blow-button');
+            const text = document.getElementById('blowText');
+            
+            if (!isRecording) {
+                isRecording = true;
+                button.classList.add('recording');
+                text.textContent = 'Recording... Blow Now!';
+                lungData = [];
+                
+                // Simulate data collection
+                let time = 0;
+                const interval = setInterval(() => {
+                    if (time < 100) {
+                        const value = Math.sin(time * 0.1) * (1 + Math.random() * 0.2);
+                        lungData.push(value);
+                        drawLungChart();
+                        time++;
+                    } else {
+                        clearInterval(interval);
+                        isRecording = false;
+                        button.classList.remove('recording');
+                        text.textContent = 'Test Complete';
+                        setTimeout(() => {
+                            text.textContent = 'Start Blow Test';
+                        }, 2000);
+                    }
+                }, 50);
+            }
+        }
+
+        // Simulate real-time data
+        function generateRealtimeData() {
+            // Generate heart data
+            if (heartData.length > 100) heartData.shift();
+            heartData.push(Math.sin(Date.now() * 0.002) * (1 + Math.random() * 0.3));
+            drawHeartChart();
+            
+            // Update values periodically
+            if (Math.random() > 0.9) {
+                animateSpO2();
+                animateHeartRate();
+            }
+            
+            animationId = requestAnimationFrame(generateRealtimeData);
+        }
+
+        // Section navigation
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            const navLinks = document.querySelectorAll('nav a');
+            
+            sections.forEach(section => section.classList.remove('active'));
+            navLinks.forEach(link => link.classList.remove('active'));
+            
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Initialize
+        window.onload = function() {
+            // Set canvas sizes
+            const canvases = ['lungCanvas', 'heartCanvas'];
+            canvases.forEach(id => {
+                const canvas = document.getElementById(id);
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            });
+            
+            // Start animations
+            animateSpO2();
+            animateHeartRate();
+            generateRealtimeData();
+            
+            // Initial heart data
+            for (let i = 0; i < 100; i++) {
+                heartData.push(Math.sin(i * 0.1) * (1 + Math.random() * 0.3));
+            }
+        };
+    </script>
+</body>
+</html>
