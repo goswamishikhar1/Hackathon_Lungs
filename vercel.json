@@ -1,10 +1,16 @@
 {
 	"version": 2,
-	"public": true,
+	"builds": [
+	  {
+		"src": "index.py",
+		"use": "@vercel/python",
+		"config": { "maxLambdaSize": "15mb", "runtime": "python3.9" }
+	  }
+	],
 	"routes": [
-		{ "src": "/health_detective.github.io-main/(.*)", "dest": "newww/health_detective.github.io-main/$1" },
-		{ "src": "/lung-health-monitor.html", "dest": "newww/lung-health-monitor.html" },
-		{ "src": "/", "dest": "newww/index.html" },
-		{ "src": "/(.*)", "dest": "newww/$1" }
+	  {
+		"src": "/(.*)",
+		"dest": "index.py"
+	  }
 	]
-}
+  }
